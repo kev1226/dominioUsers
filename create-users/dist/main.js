@@ -1,0 +1,29 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const core_1 = require("@nestjs/core");
+const app_module_1 = require("./app.module");
+const common_1 = require("@nestjs/common");
+const microservices_1 = require("@nestjs/microservices");
+async function bootstrap() {
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+    }));
+    app.connectMicroservice({
+        transport: microservices_1.Transport.RMQ,
+        options: {
+            urls: ['amqp://localhost:5672'],
+            queue: 'user_created',
+            queueOptions: {
+                durable: false,
+            },
+        },
+    });
+    await app.startAllMicroservices();
+    await app.listen(process.env.PORT || 3006);
+}
+bootstrap();
+//# sourceMappingURL=main.js.map
